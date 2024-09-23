@@ -1,3 +1,14 @@
+use feo_core::Emulation;
+
+mod display;
+
 fn main() {
-    println!("Hello, world!");
+    let mut emu = Emulation::new();
+    display::init();
+    /*
+    let args: Vec<_> = env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: path to game rom unspecified");
+        return;
+    } */
 }

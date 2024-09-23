@@ -11,7 +11,7 @@ const STACK_SIZE: usize = 16;
 pub struct Emulation {
     program_counter: u16,
     ram: [u8; RAM_SIZE],
-    display: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
+    frame_buffer: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
     registers: [u8; REGISTER_NUM],
     i_register: u16,
     stack_pointer: u16,
@@ -29,7 +29,7 @@ impl Emulation {
         let mut new_emulation = Self {
             program_counter: START_ADDRESS,
             ram: [0; RAM_SIZE],
-            display: [false; SCREEN_WIDTH * SCREEN_HEIGHT],
+            frame_buffer: [false; SCREEN_WIDTH * SCREEN_HEIGHT],
             registers: [0; REGISTER_NUM],
             i_register: 0,
             stack_pointer: 0,
@@ -47,7 +47,7 @@ impl Emulation {
     pub fn reset(&mut self) {
         self.program_counter = START_ADDRESS;
         self.ram = [0; RAM_SIZE];
-        self.display = [false; SCREEN_WIDTH * SCREEN_HEIGHT];
+        self.frame_buffer = [false; SCREEN_WIDTH * SCREEN_HEIGHT];
         self.registers = [0; REGISTER_NUM];
         self.i_register = 0;
         self.stack_pointer = 0;
@@ -56,6 +56,23 @@ impl Emulation {
         self.delay_timer = 0;
         self.sound_timer = 0;
         self.ram[..font::SET_SIZE].copy_from_slice(&font::SET);
+    }
+
+    // returns a pointer to the frame buffer
+    pub fn get_display(&self) -> &[bool] {
+        &self.frame_buffer
+    }
+
+    // sets keys in the key array
+    pub fn key_press(&mut self, index: usize, pressed: bool) {
+        self.keys[index] = pressed;
+    }
+
+    // load ROM data into RAM from start address
+    pub fn load(&mut self, data: &[u8]) {
+        let start = START_ADDRESS as usize;
+        let end = (START_ADDRESS as usize) + data.len();
+        self.ram[start..end].copy_from_slice(data);
     }
 
     // pushes and popping values to and from the stack

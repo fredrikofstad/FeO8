@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 feo_core = { path = "../core" }
+sdl2 = "0.37"
+
