@@ -1,4 +1,4 @@
-use crate::emulation;
+use crate::chip;
 
 /*
 Sprites are always 8 pixels wide but can be a variable amount of pixels from 1 to 16 pixels tall
@@ -7,7 +7,7 @@ The sprites are stored row by row beginning with the address stored in register 
 Register F is set when bits are flipped (from black pixel to white or vice versa)
 */
 
-pub fn draw_sprite(emu: &mut emulation::Emulation, nibble2:u16, nibble3:u16, nibble4:u16){
+pub fn draw_sprite(emu: &mut chip::Emulation, nibble2:u16, nibble3:u16, nibble4:u16){
     // nibble 2 and 3 specify the x and y coordinates to draw to
     let screen_x = emu.registers[nibble2 as usize] as u16;
     let screen_y = emu.registers[nibble3 as usize] as u16;
@@ -25,10 +25,10 @@ pub fn draw_sprite(emu: &mut emulation::Emulation, nibble2:u16, nibble3:u16, nib
             // Use a mask to fetch current pixel's bit. Only flip if a 1
             if (pixels & (0b1000_0000 >> pixel)) != 0 {
                 // apply modulo to allow sprites to wrap around screen
-                let x = (screen_x + pixel) as usize % emulation::SCREEN_WIDTH;
-                let y = (screen_y + line) as usize % emulation::SCREEN_HEIGHT;
+                let x = (screen_x + pixel) as usize % chip::SCREEN_WIDTH;
+                let y = (screen_y + line) as usize % chip::SCREEN_HEIGHT;
                 // Get our pixel's index for our 1D screen array
-                let index = x + emulation::SCREEN_WIDTH * y;
+                let index = x + chip::SCREEN_WIDTH * y;
                 // Check if we're about to flip the pixel and set
                 flipped_pixels |= emu.frame_buffer[index];
                 emu.frame_buffer[index] ^= true;

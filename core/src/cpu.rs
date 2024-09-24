@@ -7,9 +7,9 @@
 */
 use rand::random;
 
-use crate::{emulation, sprites};
+use crate::{chip, sprites};
 
-pub fn execute(emu: &mut emulation::Emulation, op: u16) {
+pub fn execute(emu: &mut chip::Emulation, op: u16) {
     let nibble1 = (op & 0xF000) >> 12;
     let nibble2 = (op & 0x0F00) >> 8;
     let nibble3 = (op & 0x00F0) >> 4;
@@ -20,7 +20,7 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
         (0, 0, 0, 0) => return,
         // CLS - Clear Screen
         (0, 0, 0xE, 0) => {
-            emu.frame_buffer = [false; emulation::SCREEN_WIDTH * emulation::SCREEN_HEIGHT];
+            emu.frame_buffer = [false; chip::SCREEN_WIDTH * chip::SCREEN_HEIGHT];
         },
         // RET - Return from Subroutine to the address stored on stack
         (0, 0, 0xE, 0xE) => {
@@ -203,11 +203,93 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
                 emu.next_instruction()
             }
         },
+        // VX = DT - stores the current state of the delay timer in register X
+        (0xF, _, 0, 7) => {
+            let x = nibble2 as usize;
+            emu.registers[x] = emu.delay_timer;
+        },
 
+        // WAIT KEY - loops until key is pressed, stores key pressed in register X
+        (0xF, _, 0, 0xA) => {
+            let x = nibble2 as usize;
+            let mut pressed = false;
+            for i in 0..emu.keys.len() {
+                if emu.keys[i] {
+                    emu.registers[x] = i as u8;
+                    pressed = true;
+                    break;
+                }
+            }
+            if !pressed {
+                // loop and try again
+                emu.program_counter -= chip::INSTRUCTION_SIZE;
+            }
+        },
 
+        // DT = VX - sets delay timer to register X's value
+        (0xF, _, 1, 5) => {
+            let x = nibble2 as usize;
+            emu.delay_timer = emu.registers[x];
+        },
 
+        // ST = VX - store sound timer in register X
+        (0xF, _, 1, 8) => {
+            let x = nibble2 as usize;
+            emu.sound_timer = emu.registers[x];
+        },
 
-        // else
-        (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op),
+        //  I += VX - increments the index register by the value of register x, rolls over to 0
+        (0xF, _, 1, 0xE) => {
+            let x = nibble2 as usize;
+            let x_value = emu.registers[x] as u16;
+            emu.index_register = emu.index_register.wrapping_add(x_value);
+        },
+
+        // Printing Font
+
+        // I = FONT, sets the index register to the address of nibbles value
+        (0xF, _, 2, 9) => {
+            let x = nibble2 as usize;
+            let char = emu.registers[x] as u16;
+            // fonts are stored in the beginning of RAM with 5 byte offsets
+            emu.index_register = char * 5;
+        },
+
+        // BCD - stores the binary coded digit of x into the ram (hex to dec)
+        //TODO: bit magic
+        (0xF, _, 3, 3) => {
+            let x = nibble2 as usize;
+            let x_value = emu.registers[x] as f32;
+
+            // get all places individually
+            let hundreds = (x_value / 100.0).floor() as u8;
+            let tens = ((x_value / 10.0) % 10.0).floor() as u8;
+            let ones = (x_value % 10.0) as u8;
+
+            emu.ram[emu.index_register as usize] = hundreds;
+            emu.ram[(emu.index_register + 1) as usize] = tens;
+            emu.ram[(emu.index_register + 2) as usize] = ones;
+        },
+
+        // STORE V0 - VX - stores the values of the first register up to x register in RAM
+        (0xF, _, 5, 5) => {
+            let x = nibble2 as usize;
+            let i_reg = emu.index_register as usize;
+            for index in 0..=x {
+                emu.ram[i_reg + index] = emu.registers[index];
+            }
+        },
+
+        // LOAD V0 - VX - loads the values of RAM into the registers from reg 0 to reg x
+        (0xF, _, 6, 5) => {
+            let x = nibble2 as usize;
+            let i_reg = emu.index_register as usize;
+            for index in 0..=x {
+                emu.registers[index] = emu.ram[i_reg + index];
+            }
+        },
+
+        // all basic instructions of chip8 implemented. but chip8 extensions are currently not:
+        (_, _, _, _) => unimplemented!("opcode: {} is not implemented", op),
     }
 }

@@ -19,8 +19,8 @@ pub struct Emulation {
     stack_pointer: u16,
     stack: [u16; STACK_SIZE],
     pub(crate) keys: [bool; NUM_KEYS],
-    delay_timer: u8,
-    sound_timer: u8,
+    pub(crate) delay_timer: u8,
+    pub(crate) sound_timer: u8,
 }
 
 // The contents of rom are copied to address 512 in ram

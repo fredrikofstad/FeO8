@@ -1,8 +1,8 @@
 mod font;
-mod emulation;
+mod chip;
 mod cpu;
 mod sprites;
 
-pub use emulation::Emulation;
-pub use emulation::SCREEN_HEIGHT;
-pub use emulation::SCREEN_WIDTH;
+pub use chip::Emulation;
+pub use chip::SCREEN_HEIGHT;
+pub use chip::SCREEN_WIDTH;
