@@ -5,8 +5,9 @@
     which is then executed.
     A copy of the instruction set can be found here: https://johnearnest.github.io/Octo/docs/chip8ref.pdf
 */
+use rand::random;
 
-use crate::emulation;
+use crate::{emulation, sprites};
 
 pub fn execute(emu: &mut emulation::Emulation, op: u16) {
     let nibble1 = (op & 0xF000) >> 12;
@@ -42,7 +43,7 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
             let x = nibble2 as usize;
             let nn = (op & 0xFF) as u8;
             if emu.registers[x] == nn {
-                emu.program_counter += emulation::INSTRUCTION_SIZE;
+                emu.next_instruction();
             }
         },
 
@@ -51,7 +52,7 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
             let x = nibble2 as usize;
             let nn = (op & 0xFF) as u8;
             if emu.registers[x] != nn {
-                emu.program_counter += emulation::INSTRUCTION_SIZE;
+                emu.next_instruction();
             }
         },
 
@@ -60,7 +61,7 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
             let x = nibble2 as usize;
             let y = nibble3 as usize;
             if emu.registers[x] == emu.registers[y] {
-                emu.program_counter += emulation::INSTRUCTION_SIZE;
+                emu.next_instruction();
             }
         },
 
@@ -149,11 +150,49 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
             emu.registers[0xF] = msb;
         },
 
+        // SKIP VX != VY - skips the next line if x register value is not the same as y register
+        (9, _, _, 0) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            if emu.registers[x] != emu.registers[y] {
+                emu.next_instruction();
+            }
+        },
+        // I = NNN - sets the i register (pointer to ram address)
+        (0xA, _, _, _) => {
+            let nnn = op & 0xFFF;
+            emu.i_register = nnn;
+        },
 
+        // JMP V0 + NNN - jumps to the sum of register 0 and NNN
+        (0xB, _, _, _) => {
+            let nnn = op & 0xFFF;
+            emu.program_counter = (emu.registers[0] as u16) + nnn;
+        },
 
+        // VX = rand() & NN - RNG generator, takes a random u8 and ands with NN
+        (0xC, _, _, _) => {
+            let x = nibble2 as usize;
+            let nn = (op & 0xFF) as u8;
+            let rng: u8 = random();
+            emu.registers[x] = rng & nn;
+        },
 
+        (0xD, _, _, _) => {
+            sprites::draw_sprite(emu, nibble2, nibble3, nibble4);
+        }
 
+        // User input
 
+        // SKIP KEY PRESS - skips the next instruction if the key in register x is pressed
+        (0xE, _, 9, 0xE) => {
+            let x = nibble2 as usize;
+            let x_value = emu.registers[x];
+            let key = emu.keys[x_value as usize];
+            if key {
+                emu.next_instruction();
+            }
+        },
 
 
 

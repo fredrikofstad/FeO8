@@ -12,13 +12,13 @@ const STACK_SIZE: usize = 16;
 
 pub struct Emulation {
     pub(crate) program_counter: u16,
-    ram: [u8; RAM_SIZE],
+    pub(crate) ram: [u8; RAM_SIZE],
     pub(crate) frame_buffer: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
     pub(crate) registers: [u8; REGISTER_NUM],
-    i_register: u16,
+    pub(crate) i_register: u16,
     stack_pointer: u16,
     stack: [u16; STACK_SIZE],
-    keys: [bool; NUM_KEYS],
+    pub(crate) keys: [bool; NUM_KEYS],
     delay_timer: u8,
     sound_timer: u8,
 }
@@ -87,6 +87,10 @@ impl Emulation {
         self.stack[self.stack_pointer as usize]
     }
 
+    pub(crate) fn next_instruction(&mut self){
+        self.program_counter += INSTRUCTION_SIZE;
+    }
+
     // CPU instructions
     pub fn tick(&mut self) {
         // Fetch
@@ -101,7 +105,7 @@ impl Emulation {
         let first_byte = self.ram[self.program_counter as usize] as u16;
         let second_byte = self.ram[(self.program_counter + 1) as usize] as u16;
         let op = (first_byte << 8) | second_byte;
-        self.program_counter += INSTRUCTION_SIZE;
+        self.next_instruction();
         op
     }
 
