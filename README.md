@@ -8,4 +8,4 @@
 
 ## FeO8 - Chip-8 Emulator written in Rust
 
-Currently contains around 10 cpu instructions as well as the basic components of chip-8's specificatinos.
+Currently contains around 10 cpu instructions as well as the basic components of chip-8's specifications.

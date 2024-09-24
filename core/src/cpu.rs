@@ -85,6 +85,78 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
             emu.registers[x] = emu.registers[y]
         },
 
+        //  - Bitwise operators between register X and Y -
+        // VX |= VY
+        (8, _, _, 1) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            emu.registers[x] |= emu.registers[y];
+        },
+
+        // VX &= VY
+        (8, _, _, 2) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            emu.registers[x] &= emu.registers[y];
+        },
+        // VX ^= VY
+        (8, _, _, 3) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            emu.registers[x] ^= emu.registers[y];
+        },
+
+        // VX += VY - adds y's value to x, and sets carry flag in case of overflow
+        (8, _, _, 4) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            let (x_value, carry) = emu.registers[x].overflowing_add(emu.registers[y]);
+            emu.registers[x] = x_value;
+            emu.registers[0xF] = if carry { 1 } else { 0 }; // carry flag register
+        },
+
+        // VX -= VY - same as above but with subtraction, sets flag to 0 if borrowing
+        (8, _, _, 5) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            let (x_value, borrow) = emu.registers[x].overflowing_sub(emu.registers[y]);
+            emu.registers[x] = x_value;
+            emu.registers[0xF] = if borrow { 0 } else { 1 };
+        },
+
+        // VX >>= 1, right bit shift on register x's value, dropped bit stored in f register
+        (8, _, _, 6) => {
+            let x = nibble2 as usize;
+            let lsb = emu.registers[x] & 1;
+            emu.registers[x] >>= 1;
+            emu.registers[0xF] = lsb;
+        },
+
+        // VX = VY - VX - subtracts x register from y register, saving borrow in f register
+        (8, _, _, 7) => {
+            let x = nibble2 as usize;
+            let y = nibble3 as usize;
+            let (x_value, borrow) = emu.registers[y].overflowing_sub(emu.registers[x]);
+            emu.registers[x] = x_value;
+            emu.registers[0xF] = if borrow { 0 } else { 1 };
+        },
+
+        // VX <<= 1, bit shift left storing overflow bit into f register
+        (8, _, _, 0xE) => {
+            let x = nibble2 as usize;
+            let msb = (emu.registers[x] >> 7) & 1;
+            emu.registers[x] <<= 1;
+            emu.registers[0xF] = msb;
+        },
+
+
+
+
+
+
+
+
+
         // else
         (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op),
     }
