@@ -1,7 +1,9 @@
 use crate::font;
+use crate::cpu;
 
 pub const SCREEN_WIDTH: usize = 64;
 pub const SCREEN_HEIGHT: usize = 32;
+pub const INSTRUCTION_SIZE: u16 = 2;
 
 const RAM_SIZE: usize = 4096;
 const REGISTER_NUM: usize = 16;
@@ -9,10 +11,10 @@ const NUM_KEYS: usize = 16;
 const STACK_SIZE: usize = 16;
 
 pub struct Emulation {
-    program_counter: u16,
+    pub(crate) program_counter: u16,
     ram: [u8; RAM_SIZE],
-    frame_buffer: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
-    registers: [u8; REGISTER_NUM],
+    pub(crate) frame_buffer: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
+    pub(crate) registers: [u8; REGISTER_NUM],
     i_register: u16,
     stack_pointer: u16,
     stack: [u16; STACK_SIZE],
@@ -76,11 +78,11 @@ impl Emulation {
     }
 
     // pushes and popping values to and from the stack
-    fn push(&mut self, val: u16) {
+    pub(crate) fn push(&mut self, val: u16) {
         self.stack[self.stack_pointer as usize] = val;
         self.stack_pointer += 1;
     }
-    fn pop(&mut self) -> u16 {
+    pub(crate) fn pop(&mut self) -> u16 {
         self.stack_pointer -= 1;
         self.stack[self.stack_pointer as usize]
     }
@@ -90,7 +92,7 @@ impl Emulation {
         // Fetch
         let op = self.fetch();
         // Decode
-        self.execute(op);
+        cpu::execute(self, op);
     }
 
     // fetches the next cpu instruction for execution
@@ -99,22 +101,8 @@ impl Emulation {
         let first_byte = self.ram[self.program_counter as usize] as u16;
         let second_byte = self.ram[(self.program_counter + 1) as usize] as u16;
         let op = (first_byte << 8) | second_byte;
-        self.program_counter += 2;
+        self.program_counter += INSTRUCTION_SIZE;
         op
-    }
-
-    fn execute(&mut self, op: u16) {
-        let hex1 = (op & 0xF000) >> 12;
-        let hex2 = (op & 0x0F00) >> 8;
-        let hex3 = (op & 0x00F0) >> 4;
-        let hex4 = op & 0x000F;
-
-        match (hex1, hex2, hex3, hex4) {
-            // NOP
-            (0, 0, 0, 0) => return,
-            // else
-            (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op),
-        }
     }
 
 
