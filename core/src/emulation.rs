@@ -15,7 +15,7 @@ pub struct Emulation {
     pub(crate) ram: [u8; RAM_SIZE],
     pub(crate) frame_buffer: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
     pub(crate) registers: [u8; REGISTER_NUM],
-    pub(crate) i_register: u16,
+    pub(crate) index_register: u16,
     stack_pointer: u16,
     stack: [u16; STACK_SIZE],
     pub(crate) keys: [bool; NUM_KEYS],
@@ -33,7 +33,7 @@ impl Emulation {
             ram: [0; RAM_SIZE],
             frame_buffer: [false; SCREEN_WIDTH * SCREEN_HEIGHT],
             registers: [0; REGISTER_NUM],
-            i_register: 0,
+            index_register: 0,
             stack_pointer: 0,
             stack: [0; STACK_SIZE],
             keys: [false; NUM_KEYS],
@@ -51,7 +51,7 @@ impl Emulation {
         self.ram = [0; RAM_SIZE];
         self.frame_buffer = [false; SCREEN_WIDTH * SCREEN_HEIGHT];
         self.registers = [0; REGISTER_NUM];
-        self.i_register = 0;
+        self.index_register = 0;
         self.stack_pointer = 0;
         self.stack = [0; STACK_SIZE];
         self.keys = [false; NUM_KEYS];

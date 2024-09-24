@@ -3,7 +3,7 @@ use feo_core::Emulation;
 mod display;
 
 fn main() {
-    let mut emu = Emulation::new();
+    let emu = Emulation::new();
     display::init();
     /*
     let args: Vec<_> = env::args().collect();

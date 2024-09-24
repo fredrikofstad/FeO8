@@ -161,7 +161,7 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
         // I = NNN - sets the i register (pointer to ram address)
         (0xA, _, _, _) => {
             let nnn = op & 0xFFF;
-            emu.i_register = nnn;
+            emu.index_register = nnn;
         },
 
         // JMP V0 + NNN - jumps to the sum of register 0 and NNN
@@ -182,7 +182,7 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
             sprites::draw_sprite(emu, nibble2, nibble3, nibble4);
         }
 
-        // User input
+        // USER INPUT
 
         // SKIP KEY PRESS - skips the next instruction if the key in register x is pressed
         (0xE, _, 9, 0xE) => {
@@ -193,6 +193,17 @@ pub fn execute(emu: &mut emulation::Emulation, op: u16) {
                 emu.next_instruction();
             }
         },
+
+        // SKIP KEY RELEASE - skips the next instruction if the key in register x is NOT pressed
+        (0xE, _, 0xA, 1) => {
+            let x = nibble2 as usize;
+            let x_value = emu.registers[x];
+            let key = emu.keys[x_value as usize];
+            if !key {
+                emu.next_instruction()
+            }
+        },
+
 
 
 
