@@ -256,7 +256,6 @@ pub fn execute(emu: &mut chip::Emulation, op: u16) {
         },
 
         // BCD - stores the binary coded digit of x into the ram (hex to dec)
-        //TODO: bit magic
         (0xF, _, 3, 3) => {
             let x = nibble2 as usize;
             let x_value = emu.registers[x] as f32;
